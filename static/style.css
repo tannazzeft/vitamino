@@ -1,0 +1,9 @@
+body {
+    background-color: #E0FFFF; /* فیروزه‌ای روشن */
+    font-family: sans-serif;
+}
+
+.navbar {
+    background-color: #40E0D0; /* فیروزه‌ای اصلی */
+    color: white;
+}
