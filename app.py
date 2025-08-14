@@ -214,7 +214,7 @@ def load_css():
 
 # کلاس مدیریت دیتابیس
 class DatabaseManager:
-    def __init__(self, db_path="output(2)(1).sqlite"):
+    def __init__(self, db_path="data/output(2)(1).sqlite"):
         self.db_path = db_path
         # تغییر مسیر به دایرکتوری data/
         self.data_dir = Path("data/")  
