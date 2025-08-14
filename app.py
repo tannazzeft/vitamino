@@ -3,7 +3,10 @@ import pandas as pd
 import numpy as np
 import json
 import hashlib
-import sqlite3
+import pysqlite3 as sqlite3
+    sqlite3.sqlite_version_info = tuple(map(int, sqlite3.sqlite_version.split('.')))
+except ImportError:
+    import sqlite3
 from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objects as go
@@ -212,14 +215,23 @@ def load_css():
     <link href='https://fonts.googleapis.com/css2?family=Vazir:wght@300;400;500;700&display=swap' rel='stylesheet'>
     """, unsafe_allow_html=True)
 
-# کلاس مدیریت دیتابیس
 class DatabaseManager:
-    def __init__(self, db_path="data/output(2)(1).sqlite"):
-        self.db_path = db_path
-        # تغییر مسیر به دایرکتوری data/
-        self.data_dir = Path("data/")  
+    def __init__(self, db_path: str = "data/output(2)(1).sqlite") -> None:
+        """Initialize database with thread safety support"""
+        self.conn: sqlite3.Connection = sqlite3.connect(
+            database=db_path,
+            timeout=30,
+            detect_types=sqlite3.PARSE_DECLTYPES,
+            check_same_thread=False  # برای محیط‌های چندنخی
+        )
+        self.conn.execute("PRAGMA journal_mode=WAL")  # برای عملکرد بهتر
+        self.data_dir: Path = Path("data/")
+        self._ensure_data_dir()
         self.init_database()
-        self.load_all_csv_data()
+    
+    def _ensure_data_dir(self) -> None:
+        """Create data directory if not exists"""
+        os.makedirs(self.data_dir, exist_ok=True)
     
     def init_database(self):
         conn = sqlite3.connect(self.db_path)
