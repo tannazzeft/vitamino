@@ -3,10 +3,16 @@ import pandas as pd
 import numpy as np
 import json
 import hashlib
-import pysqlite3 as sqlite3
+import sqlite3
+print(sqlite3.sqlite_version)
+try:
+    import pysqlite3 as sqlite3
     sqlite3.sqlite_version_info = tuple(map(int, sqlite3.sqlite_version.split('.')))
 except ImportError:
     import sqlite3
+    # Ensure standard library also has version_info tuple
+    if not hasattr(sqlite3, 'sqlite_version_info'):
+        sqlite3.sqlite_version_info = tuple(map(int, sqlite3.sqlite_version.split('.')))
 from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objects as go
