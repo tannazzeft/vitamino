@@ -8,7 +8,6 @@ try:
 except ImportError:
     import sqlite3
 
-‎# ایجاد ویژگی version_info برای هر دو حالت
 if not hasattr(sqlite3, 'sqlite_version_info'):
     sqlite3.sqlite_version_info = tuple(map(int, sqlite3.sqlite_version.split('.')))
 from datetime import datetime, timedelta
