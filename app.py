@@ -22,7 +22,6 @@ import requests
 import os
 from pathlib import Path
 
-‎# تنظیمات صفحه
 st.set_page_config(
     page_title="سیستم تحلیل تداخلات دارویی",
     page_icon="💊",
@@ -30,11 +29,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-‎# استایل‌های CSS برای طراحی
 def load_css():
     st.markdown("""
     <style>
-‎    /* پالت رنگی سفارشی */
     :root {
         --primary-ultralight: #F0FFFF;  /* فیروزه‌ای خیلی خیلی روشن */
         --primary-light: #E0F7FA;       /* فیروزه‌ای خیلی روشن */
@@ -45,13 +42,11 @@ def load_css():
         --secondary-dark: #FF9800;      /* نارنجی فسفری تیره */
     }
     
-‎    /* استایل اصلی برنامه */
     .main, .stApp {
         background-color: var(--primary-ultralight) !important;
         font-family: 'Vazir', 'Segoe UI', Tahoma, sans-serif;
     }
     
-‎    /* هدر */
     .header-container {
         background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
         padding: 2rem;
@@ -69,7 +64,6 @@ def load_css():
         text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
     
-‎    /* کارت محصولات */
     .product-card {
         background: white;
         border-radius: 12px;
@@ -97,7 +91,6 @@ def load_css():
         font-size: 0.9rem;
     }
     
-‎    /* دکمه‌ها */
     .stButton>button {
         background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
         color: white !important;
@@ -113,12 +106,10 @@ def load_css():
         background: linear-gradient(135deg, var(--primary-dark), var(--primary)) !important;
     }
     
-‎    /* نوار کناری */
     .sidebar .sidebar-content {
         background-color: var(--primary-light) !important;
     }
     
-‎    /* کارت‌های ویژه */
     .interaction-card {
         border-left: 5px solid var(--secondary) !important;
     }
@@ -127,7 +118,6 @@ def load_css():
         border-left: 5px solid var(--secondary-dark) !important;
     }
     
-‎    /* هایلایت‌ها */
     .highlight {
         background-color: var(--secondary-light);
         padding: 0.2rem 0.4rem;
@@ -213,7 +203,6 @@ def load_css():
     </style>
     """, unsafe_allow_html=True)
     
-‎    # اضافه کردن فونت فارسی
     st.markdown("""
     <link href='https://fonts.googleapis.com/css2?family=Vazir:wght@300;400;500;700&display=swap' rel='stylesheet'>
     """, unsafe_allow_html=True)
@@ -233,7 +222,6 @@ class DatabaseManager:
     
     def init_database(self):
         try:
-‎            # ایجاد دایرکتوری اگر وجود ندارد
             os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
             
             conn = sqlite3.connect(self.db_path)
@@ -341,7 +329,6 @@ class DatabaseManager:
             )
             """)
             
-‎            # اضافه کردن جدول sessions برای مدیریت نشست‌های کاربری
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS sessions (
                 session_id TEXT PRIMARY KEY,
@@ -357,7 +344,6 @@ class DatabaseManager:
             st.success("✅ پایگاه داده با موفقیت راه‌اندازی شد!")
         except Exception as e:
             st.error(f"خطا در راه‌اندازی پایگاه داده: {str(e)}")
-‎            # استفاده از پایگاه داده در حافظه به عنوان جایگزین
             st.info("از پایگاه داده موقت در حافظه استفاده می‌شود")
             self.db_path = ":memory:"
     
@@ -489,10 +475,8 @@ class DatabaseManager:
         except Exception as e:
             st.error(f"خطا در افزودن محصولات نمونه: {str(e)}")
 
-‎# بقیه کدهای کلاس‌ها و توابع...
 EOF
 
-‎# کلاس تحلیل تداخلات
 class InteractionAnalyzer:
     def __init__(self, db_manager):
         self.db = db_manager
@@ -712,8 +696,7 @@ class InteractionAnalyzer:
                         elif severity in ['A', 'B']:
                             summary['low'] += 1
         return summary
-
-‎# کلاس تحلیل آزمایش
+        
 class LabAnalyzer:
     def __init__(self):
         self.normal_ranges = {
@@ -823,7 +806,6 @@ class LabAnalyzer:
         
         return recommendations
 
-‎# کلاس احراز هویت
 class AuthManager:
     def __init__(self, db_manager):
         self.db = db_manager
@@ -868,7 +850,6 @@ class AuthManager:
         else:
             return {'success': False}
 
-‎# کلاس فروشگاه آنلاین
 class OnlineShop:
     def __init__(self, db_manager):
         self.db = db_manager
@@ -913,7 +894,6 @@ class OnlineShop:
         cart_items = self.get_cart_items()
         return sum(item['total_price'] for item in cart_items)
 
-‎# کلاس رابط کاربری اصلی
 class SupplementAnalysisUI:
     def __init__(self):
         self.db_manager = DatabaseManager()
@@ -1303,7 +1283,6 @@ class SupplementAnalysisUI:
     def render_shop_section(self):
         st.header("🛍️ فروشگاه مکمل‌ها", anchor="shop")
         
-‎        # جستجوی محصولات
         search_query = st.text_input("جستجوی محصولات", placeholder="نام مکمل مورد نظر را وارد کنید...")
         
         products = self.shop.get_products()
@@ -1315,14 +1294,12 @@ class SupplementAnalysisUI:
             st.warning("محصولی یافت نشد!")
             return
         
-‎        # دسته‌بندی‌ها
         categories = ["همه محصولات"] + sorted(list(set(p['category'] for p in products if p['category'])))
         selected_category = st.selectbox("دسته‌بندی", categories, index=0)
         
         if selected_category != "همه محصولات":
             products = [p for p in products if p['category'] == selected_category]
         
-‎        # نمایش محصولات
         cols = st.columns(3)
         for idx, product in enumerate(products):
             with cols[idx % 3]:
@@ -1388,7 +1365,6 @@ class SupplementAnalysisUI:
             st.divider()
             total += item['total_price']
         
-‎        # خلاصه پرداخت
         st.markdown(f"""
         <div style="background-color: var(--primary-light); padding: 1.5rem; border-radius: 10px;">
             <div style="display: flex; justify-content: space-between; font-size: 1.1rem;">
@@ -1398,7 +1374,6 @@ class SupplementAnalysisUI:
         </div>
         """, unsafe_allow_html=True)
         
-‎        # دکمه پرداخت
         col1, col2 = st.columns([3, 1])
         with col1:
             st.markdown("[ادامه خرید](#shop)")
@@ -1440,7 +1415,6 @@ class SupplementAnalysisUI:
 ‎            سیستم تداخلات احتمالی را بررسی کرده و توصیه‌های مناسب ارائه می‌دهد.
             """)
 
-‎# تابع اصلی برای اجرای برنامه
 def main():
     app = SupplementAnalysisUI()
     app.run()
