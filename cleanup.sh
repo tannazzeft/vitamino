@@ -1,25 +1,40 @@
-#!/bin/bash
-set -e
+import re
+import os
+import shutil
 
-FILE="app.py"
+def clean_file(file_path, backup=True):
+    if not os.path.exists(file_path):
+        print(f"فایل {file_path} یافت نشد!")
+        return
 
-# 1. ایجاد بکاپ
-cp "$FILE" "$FILE.bak"
-echo "📂 پشتیبان ساخته شد: $FILE.bak"
+    if backup:
+        backup_path = file_path + '.bak'
+        shutil.copy2(file_path, backup_path)
+        print(f"نسخه پشتیبان در {backup_path} ایجاد شد.")
 
-# 2. حذف ایمپورت‌های استفاده‌نشده و خطوط بی‌مصرف
-autoflake --in-place --remove-all-unused-imports --remove-unused-variables "$FILE"
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        content = f.read()
 
-# 3. حذف خطوط خالی اضافی
-sed -i '/^[[:space:]]*$/N;/^\n$/D' "$FILE"
+    cleaned_content = re.sub(r'[^\x20-\x7E\u0600-\u06FF\n\t,.!?]', '', content)
 
-# 4. تبدیل تب به ۴ فاصله (اگر هنوز جایی مونده)
-sed -i 's/\t/    /g' "$FILE"
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(cleaned_content)
+    print(f"فایل {file_path} تمیز شد.")
 
-# 5. فرمت استاندارد با black
-black "$FILE"
+def clean_all_csv(folder_path="data"):  # تغییر به پوشه data
+    if not os.path.isdir(folder_path):
+        print(f"پوشه {folder_path} یافت نشد!")
+        return
 
-# 6. بررسی استایل با flake8 (اختیاری، خطاها فقط گزارش می‌شوند)
-flake8 "$FILE" || true
+    csv_files = [f for f in os.listdir(folder_path) if f.lower().endswith(".csv")]
+    if not csv_files:
+        print(f"هیچ فایل CSV قابل خواندن در پوشه {folder_path} یافت نشد!")
+        return
 
-echo "✅ فایل $FILE تمیز و فرمت شد."
+    for file in csv_files:
+        file_path = os.path.join(folder_path, file)
+        print(f"در حال تمیز کردن: {file}")
+        clean_file(file_path)
+
+if __name__ == "__main__":
+    clean_all_csv()
