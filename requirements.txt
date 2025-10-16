@@ -4,8 +4,11 @@ numpy==1.26.4
 plotly==5.22.0
 requests==2.31.0
 beautifulsoup4==4.12.3
-googletrans==3.1.0a0
+googletrans-py==4.0.0
 bleach==6.1.0
 tenacity==8.2.3
-pysqlite3>=1.0.0
-pysqlite3-binary>=1.0.0
+pysqlite3==0.5.4
+pysqlite3-binary==0.5.4
+httpx>=0.25.0
+jupyterlab==4.4.4
+bcrypt==4.2.0
