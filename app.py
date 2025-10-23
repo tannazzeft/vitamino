@@ -523,94 +523,102 @@ class DatabaseManager:
                 raise
 
     def load_all_csv_data(self):
+        """🔧 اصلاح‌شده: همه فایل‌های CSV موجود رو می‌خونه"""
         with get_db_connection(self.db_path) as conn:
-            csv_mappings = {
-                'sheet1.csv': 'diseases_supplements',
-                'sheet2.csv': 'pregnancy_categories',
-                'sheet3.csv': 'supplement_drug_interactions',
-                'sheet4.csv': 'supplement_condition_interactions'
-            }
+            # همه فایل‌های CSV توی پوشه data رو پیدا می‌کنه
+            csv_files = list(self.data_dir.glob("*.csv"))
+
+            if not csv_files:
+                st.warning("⚠️ هیچ فایل CSV در پوشه data/ یافت نشد")
+                return
+
             loaded_files = 0
-            for csv_file, table_name in csv_mappings.items():
-                file_path = self.data_dir / csv_file
-                if file_path.exists():
-                    df = None
-                    encodings = ['utf-8-sig', 'utf-8', 'cp1256', 'iso-8859-1', 'windows-1256']
-                    for encoding in encodings:
-                        try:
-                            df = pd.read_csv(file_path, encoding=encoding)
-                            break
-                        except (UnicodeDecodeError, UnicodeError):
-                            continue
+            for csv_file in csv_files:
+                csv_name = csv_file.name
+                table_name = csv_name.replace('.csv', '')
 
-                    if df is not None and not df.empty:
-                        df = df.dropna(how='all', axis=1)
-                        df = df.dropna(how='all', axis=0)
-                        df.columns = df.columns.str.strip()
-                        df = self._standardize_column_names(df, table_name)
-                        df.to_sql(table_name, conn, if_exists='replace', index=False)
-                        loaded_files += 1
-                        st.success(f"✅ فایل {csv_file} با موفقیت بارگذاری شد!")
-            if loaded_files > 0:
-                st.success(f"✅ {loaded_files} فایل CSV با موفقیت بارگذاری شد!")
-            else:
-                st.warning("⚠️ هیچ فایل CSV قابل خواندنی یافت نشد!")
+                try:
+                    st.info(f"📂 در حال بارگذاری: {csv_name}")
+                    df = pd.read_csv(csv_file, encoding='utf-8-sig')
 
+                    if df.empty:
+                        st.warning(f"⚠️ {csv_name} خالی است")
+                        continue
+
+                    # پاک کردن ردیف/ستون‌های خالی
+                    df = df.dropna(how='all', axis=1)
+                    df = df.dropna(how='all', axis=0)
+                    df.columns = df.columns.str.strip()
+
+                    # نام ستون‌ها رو استاندارد می‌کنه
+                    df = self._standardize_column_names(df, table_name)
+
+                    # ذخیره توی دیتابیس
+                    df.to_sql(table_name, conn, if_exists='replace', index=False)
+                    loaded_files += 1
+                    st.success(f"✅ {csv_name} با موفقیت بارگذاری شد ({len(df)} ردیف)")
+
+                except Exception as e:
+                    st.error(f"❌ خطا در {csv_name}: {str(e)}")
+
+            st.success(f"🎉 {loaded_files} فایل CSV با موفقیت بارگذاری شد!")
     def _standardize_column_names(self, df, table_name):
-        column_mapping = {
-            'diseases_supplements': {
-                'بیماری': 'disease',
-                'گروه آسیب‌پذیر': 'vulnerable_group',
-                'آزمایش‌های پیشنهادی': 'recommended_tests',
-                'نکات بالینی': 'clinical_notes',
-                'تناوب پیشنهادی': 'monitoring_frequency',
-                'مکمل‌های پیشنهادی': 'recommended_supplements',
-                'رژیم غذایی حمایتی': 'supportive_diet',
-                'دوزینگ زنان': 'dosing_women',
-                'دوزینگ مردان': 'dosing_men',
-                'دوزینگ سالمندان': 'dosing_elderly',
-                'دوزینگ کودک (۰–۲ سال)': 'dosing_children_0_2',
-                'دوزینگ کودک (۲–۱۲ سال)': 'dosing_children_2_12',
-                'دوزینگ نوجوان (۱۲–۱۸ سال)': 'dosing_teens_12_18',
-                'دوزینگ افراد چاق': 'dosing_obese',
-                'دوزینگ زنان باردار و شیرده': 'dosing_pregnant_nursing',
-                'منبع': 'source'
-            },
-            'pregnancy_categories': {
-                'ماده فعال / Compound': 'compound',
-                'رده بارداری/شیردهی (A–X)': 'pregnancy_category',
-                'توصیه بالینی / Clinical Advice': 'clinical_advice',
-                'هشدار مصرف / Use Warning': 'use_warning',
-                'دوز خطرناک / Toxic Threshold': 'toxic_threshold',
-                'منابع / Sources': 'sources'
-            },
-            'supplement_drug_interactions': {
-                'گروه مکمل / Supplement Group': 'supplement_group',
-                'ماده فعال / Compound': 'compound',
-                'داروی درگیر / Interacting Drug': 'interacting_drug',
-                'شدت / Severity (A–X)': 'severity',
-                'نوع تداخل / Type': 'interaction_type',
-                'هشدار بیماری / Condition Alert': 'condition_alert',
-                'گروه حساس / Risk Group': 'risk_group',
-                'دوز پیشنهادی / RDA': 'rda',
-                'تست / Test': 'test',
-                'رنج نرمال / Normal Range': 'normal_range',
-                'توصیه بالینی / Clinical Advice': 'clinical_advice',
-                'منبع / Source': 'source'
-            },
-            'supplement_condition_interactions': {
-                'ماده فعال / Compound': 'compound',
-                'بیماری / Condition': 'condition_disease',
-                'شدت تداخل (A–X) / Severity': 'severity',
-                'توصیه بالینی / Clinical Advice': 'clinical_advice',
-                'مکانیسم / Mechanism': 'mechanism',
-                'منبع / Source': 'source'
-            }
-        }
-        if table_name in column_mapping:
-            df = df.rename(columns=column_mapping[table_name])
-        return df
+        """🔧 همه ستون‌های فارسی رو به انگلیسی تبدیل می‌کنه"""
+        # دیکشنری کامل برای همه ستون‌های ممکن
+        all_mappings = {
+            # sheet1 - diseases_supplements
+            'بیماری': 'disease',
+            'گروه آسیب‌پذیر': 'vulnerable_group',
+            'آزمایش‌های پیشنهادی': 'recommended_tests',
+            'نکات بالینی': 'clinical_notes',
+            'تناوب پیشنهادی': 'monitoring_frequency',
+            'مکمل‌های پیشنهادی': 'recommended_supplements',
+            'رژیم غذایی حمایتی': 'supportive_diet',
+            'دوزینگ زنان': 'dosing_women',
+            'دوزینگ مردان': 'dosing_men',
+            'دوزینگ سالمندان': 'dosing_elderly',
+            'دوزینگ کودک (۰–۲ سال)': 'dosing_children_0_2',
+            'دوزینگ کودک (۲–۱۲ سال)': 'dosing_children_2_12',
+            'دوزینگ نوجوان (۱۲–۱۸ سال)': 'dosing_teens_12_18',
+            'دوزینگ افراد چاق': 'dosing_obese',
+            'دوزینگ زنان باردار و شیرده': 'dosing_pregnant_nursing',
 
+            # sheet2 - pregnancy_categories
+            'ماده فعال / Compound': 'compound',
+            'رده بارداری/شیردهی (A–X)': 'pregnancy_category',
+            'توصیه بالینی / Clinical Advice': 'clinical_advice',
+            'هشدار مصرف / Use Warning': 'use_warning',
+            'دوز خطرناک / Toxic Threshold': 'toxic_threshold',
+            'منابع / Sources': 'sources',
+
+            # sheet3 - supplement_drug_interactions
+            'گروه مکمل / Supplement Group': 'supplement_group',
+            'ماده فعال / Compound': 'compound',
+            'داروی درگیر / Interacting Drug': 'interacting_drug',
+            'شدت / Severity (A–X)': 'severity',
+            'نوع تداخل / Type': 'interaction_type',
+            'هشدار بیماری / Condition Alert': 'condition_alert',
+            'گروه حساس / Risk Group': 'risk_group',
+            'دوز پیشنهادی / RDA': 'rda',
+            'تست / Test': 'test',
+            'رنج نرمال / Normal Range': 'normal_range',
+            'توصیه بالینی / Clinical Advice': 'clinical_advice',
+
+            # sheet4 - supplement_condition_interactions
+            'ماده فعال / Compound': 'compound',
+            'بیماری / Condition': 'condition_disease',
+            'شدت تداخل (A–X) / Severity': 'severity',
+            'توصیه بالینی / Clinical Advice': 'clinical_advice',
+            'مکانیسم / Mechanism': 'mechanism',
+
+            # عمومی
+            'منبع': 'source',
+            'منابع': 'source'
+        }
+
+        # همه ستون‌های فارسی رو تبدیل می‌کنه
+        df.columns = [all_mappings.get(col, col) for col in df.columns]
+        return df
     def add_sample_products(self):
         with get_db_connection(self.db_path) as conn:
             cursor = conn.cursor()
