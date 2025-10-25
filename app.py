@@ -365,7 +365,7 @@ class AdminManager:
 
 class DatabaseManager:
     def __init__(self, db_path: str = "/tmp/vitamino.sqlite") -> None:
-        self.db_path = db_path
+        self.db_path = "output(2)(1).sqlite"
         self.data_dir: Path = Path("data/")
         self._ensure_data_dir()
         try:
